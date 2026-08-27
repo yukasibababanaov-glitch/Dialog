@@ -7,7 +7,7 @@ from aiogram.filters import CommandStart, Command
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-bot = Bot(token=8823371024:AAE8Eh_8hXkZByxJGVAqHmZng6JNcPo_YdA)
+bot = Bot(token="8823371024:AAE8Eh_8hXkZByxJGVAqHmZng6JNcPo_YdA")
 dp = Dispatcher()
 router = Router()
 dp.include_router(router)
