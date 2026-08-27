@@ -1,10 +1,11 @@
 import asyncio
 import logging
+import os
+from aiohttp import web
 from aiogram import Bot, Dispatcher, Router, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import CommandStart
 
-# Твой токен бота
 BOT_TOKEN = "8823371024:AAE8Eh_8hXkZByxJGVAqHmZng6JNcPo_YdA"
 
 bot = Bot(token=BOT_TOKEN)
@@ -13,7 +14,6 @@ router = Router()
 dp.include_router(router)
 
 # --- Клавиатуры ---
-
 def get_main_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="👤 Профиль", callback_data="profile")],
@@ -43,8 +43,7 @@ def get_format_keyboard():
         [InlineKeyboardButton(text="⬅️ Назад", callback_data="functions")]
     ])
 
-# --- Обработчики команд ---
-
+# --- Обработчики ---
 @router.message(CommandStart())
 async def start_handler(message: Message):
     text = (
@@ -57,8 +56,6 @@ async def start_handler(message: Message):
         "🎂 *Приятного использования!*"
     )
     await message.answer(text, reply_markup=get_main_keyboard(), parse_mode="Markdown")
-
-# --- Обработчики Inline-кнопок ---
 
 @router.callback_query(F.data == "main_menu")
 async def menu_callback(call: CallbackQuery):
@@ -86,43 +83,48 @@ async def commands_callback(call: CallbackQuery):
         "⭕️ `.nomute` — Обход мута\n"
         "🎯 `.zero` — Крестики-нолики\n"
         "📊 `.status` — Статистика чата\n"
-        "ℹ️ `.info` — Информация\n"
-        "🚀 `.troll` — Оскорбительное сообщение\n"
-        "⏳ `.afk` — AFK режим\n"
-        "🎲 `.flip` — Монетка\n"
-        "🎯 `.rps` — Камень, ножницы, бумага\n"
-        "❓ `.help` — Список команд\n"
-        "🎥 `.save [ссылка]` — Скачать видео (TikTok, YT, Inst)\n"
-        "📹 `.krom` — Видео в кружок\n"
-        "🎙 `.voicemod` — Изменение голоса\n"
-        "📚 `.niks` — Время в фамилии\n"
-        "🖼 `.stik` — Стикер из фото\n"
-        "📑 `.clone` — Клонировать профиль\n"
-        "➕ `.gif` — Конвертер в GIF"
+        "ℹ️ `.info` — Информация"
     )
     await call.message.edit_text(text, reply_markup=get_back_keyboard(), parse_mode="Markdown")
 
 @router.callback_query(F.data == "functions")
 async def functions_callback(call: CallbackQuery):
-    text = "⚙️ **Функции**\n\nЗдесь вы можете настроить интерфейс под себя и сделать его более удобным и уникальным."
+    text = "⚙️ **Функции**\n\nЗдесь вы можете настроить интерфейс под себя."
     await call.message.edit_text(text, reply_markup=get_functions_keyboard(), parse_mode="Markdown")
 
 @router.callback_query(F.data == "func_format")
 async def format_callback(call: CallbackQuery):
-    text = "✏️ **Форматирование текста**\n\nВыберите, как будет выглядеть ваш текст."
+    text = "✏️ **Форматирование текста**\n\nВыберите стиль."
     await call.message.edit_text(text, reply_markup=get_format_keyboard(), parse_mode="Markdown")
 
 @router.callback_query(F.data == "profile")
 async def profile_callback(call: CallbackQuery):
-    await call.message.edit_text(f"👤 **Профиль**\n\nID: `{call.from_user.id}`\nИмя: {call.from_user.full_name}", reply_markup=get_back_keyboard(), parse_mode="Markdown")
+    await call.message.edit_text(f"👤 **Профиль**\n\nID: `{call.from_user.id}`", reply_markup=get_back_keyboard(), parse_mode="Markdown")
 
 @router.callback_query(F.data.in_({"stats", "subscription", "support", "func_afk", "fmt_bold", "fmt_italic", "fmt_strike", "fmt_underline", "fmt_mono", "fmt_spoiler"}))
 async def generic_callback(call: CallbackQuery):
     await call.answer("Раздел в разработке!", show_alert=True)
 
+# Заглушка веб-сервера для Render (чтобы веб-сервис не висел)
+async def handle(request):
+    return web.Response(text="Bot is running!")
+
+async def web_server():
+    app = web.Application()
+    app.router.add_get("/", handle)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    port = int(os.environ.get("PORT", 10000))
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+
 async def main():
     logging.basicConfig(level=logging.INFO)
-    await dp.start_polling(bot)
+    # Запускаем и веб-сервер для Render, и самого бота параллельно
+    await asyncio.gather(
+        web_server(),
+        dp.start_polling(bot)
+    )
 
 if __name__ == "__main__":
     asyncio.run(main())
