@@ -1,13 +1,13 @@
 import asyncio
 import logging
-import os
 from aiogram import Bot, Dispatcher, Router, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.filters import CommandStart, Command
+from aiogram.filters import CommandStart
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+# Твой токен бота
+BOT_TOKEN = "8823371024:AAE8Eh_8hXkZByxJGVAqHmZng6JNcPo_YdA"
 
-bot = Bot(token="8823371024:AAE8Eh_8hXkZByxJGVAqHmZng6JNcPo_YdA")
+bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 router = Router()
 dp.include_router(router)
@@ -116,16 +116,9 @@ async def format_callback(call: CallbackQuery):
 async def profile_callback(call: CallbackQuery):
     await call.message.edit_text(f"👤 **Профиль**\n\nID: `{call.from_user.id}`\nИмя: {call.from_user.full_name}", reply_markup=get_back_keyboard(), parse_mode="Markdown")
 
-@router.callback_query(F.data.in_({"stats", "subscription", "support", "func_afk"}))
+@router.callback_query(F.data.in_({"stats", "subscription", "support", "func_afk", "fmt_bold", "fmt_italic", "fmt_strike", "fmt_underline", "fmt_mono", "fmt_spoiler"}))
 async def generic_callback(call: CallbackQuery):
     await call.answer("Раздел в разработке!", show_alert=True)
-
-# --- Обработка удаленных сообщений (Telegram Business API) ---
-
-@router.business_messages_deleted()
-async def business_messages_deleted_handler(event):
-    # Логика перехвата удаленных сообщений
-    pass
 
 async def main():
     logging.basicConfig(level=logging.INFO)
